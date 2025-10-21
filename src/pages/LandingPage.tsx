@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Github } from "lucide-react";
+import { Github, ChevronDown, ChevronUp, Info } from "lucide-react";
 import Button from "@/components/common/Button";
 import Input from "@/components/common/Input";
 import { validateGitHubUrl } from "@/utils/validation";
@@ -9,6 +9,8 @@ import { validateGitHubUrl } from "@/utils/validation";
 const LandingPage = () => {
   const navigate = useNavigate();
   const [url, setUrl] = useState("");
+  const [context, setContext] = useState("");
+  const [showContext, setShowContext] = useState(false);
   const [validation, setValidation] = useState<ReturnType<typeof validateGitHubUrl> | null>(null);
   const [touched, setTouched] = useState(false);
 
@@ -24,7 +26,12 @@ const LandingPage = () => {
 
   const handleGenerate = () => {
     if (validation?.isValid) {
-      navigate(`/generate?url=${encodeURIComponent(url)}`);
+      // Pass both URL and context via query params
+      const params = new URLSearchParams({
+        url: url,
+        ...(context && { context: context })
+      });
+      navigate(`/generate?${params.toString()}`);
     }
   };
 
@@ -42,7 +49,6 @@ const LandingPage = () => {
         transition={{ duration: 0.6, ease: "easeOut" }}
         className="w-full max-w-3xl text-center"
       >
-        {/* Hero Section */}
         <motion.h1
           className="text-hero font-bold mb-6 bg-gradient-to-b from-foreground to-foreground/70 bg-clip-text text-transparent"
           initial={{ opacity: 0, y: 10 }}
@@ -61,14 +67,13 @@ const LandingPage = () => {
           Paste any GitHub repository URL and get comprehensive Markdown documentation in seconds. Powered by AI.
         </motion.p>
 
-        {/* Input Section */}
         <motion.div
           className="space-y-6"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.6 }}
         >
-          <div className="w-full max-w-2xl mx-auto">
+          <div className="w-full max-w-2xl mx-auto space-y-4">
             <Input
               icon={<Github className="w-5 h-5" />}
               placeholder="https://github.com/username/repository"
@@ -80,6 +85,43 @@ const LandingPage = () => {
               success={validation?.isValid}
               className="text-base shadow-apple-md"
             />
+
+            {/* Add Context Section */}
+            <motion.div
+              className="bg-card rounded-xl border border-border overflow-hidden"
+              initial={false}
+              animate={{ height: showContext ? 'auto' : '48px' }}
+            >
+              <button
+                onClick={() => setShowContext(!showContext)}
+                className="w-full px-4 py-3 flex items-center justify-between hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Add Context (Optional)</span>
+                  <Info className="w-4 h-4 text-muted-foreground" />
+                </div>
+                {showContext ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+              </button>
+
+              {showContext && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="p-4 pt-0"
+                >
+                  <textarea
+                    value={context}
+                    onChange={(e) => setContext(e.target.value)}
+                    placeholder="Provide additional context about your project: architecture details, tech stack, special features, or anything that helps generate better documentation..."
+                    maxLength={500}
+                    className="w-full h-32 px-4 py-3 rounded-lg border border-input bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                  />
+                  <div className="mt-2 text-xs text-muted-foreground text-right">
+                    {context.length}/500 characters
+                  </div>
+                </motion.div>
+              )}
+            </motion.div>
           </div>
 
           <motion.div
